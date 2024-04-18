@@ -5,8 +5,6 @@ import pymysql
 from sqlalchemy import create_engine
 from sqlalchemy import text
 
-# url = "../data/finalized_data.csv"
-# df = pd.read_csv(url, dtype=str)
 
 connection = pymysql.connect(host='localhost', user='root', password='dsci551')
 cursor = connection.cursor()
@@ -56,7 +54,7 @@ if st.button('Search'):
     database='airbnb' + str(room_type_hash(room_type))
     engine = create_engine(f'mysql+pymysql://root:dsci551@localhost/{database}')
     connection = engine.connect()
-    result = connection.execute(text(f'SELECT a.property_id, a.name, a.room_type, a.price, a.minimum_nights, a.availability_365, a.available_since_date FROM property a JOIN locatein b ON a.property_id=b.property_id JOIN location c ON b.location_id=c.location_id WHERE a.room_type="{room_type}" AND c.neighbourhood_group="{neighbourhood_group}" AND a.price>={price_range[0]} AND a.price<= {price_range[1]};'))
+    result = connection.execute(text(f'SELECT a.property_id, a.name, a.room_type, a.price, a.minimum_nights, a.availability_365, a.available_since_date FROM property a JOIN locatein b ON a.property_id=b.property_id JOIN location c ON b.location_id=c.location_id WHERE a.room_type="{room_type}" AND c.neighbourhood_group="{neighbourhood_group}" AND a.price>={price_range[0]} AND a.price<= {price_range[1]} AND a.minimum_nights<={number_of_days_stay} AND a.available_since_date<= "{move_in_date.strftime("%Y-%m-%d")}" AND (a.available_since_date + INTERVAL a.availability_365 DAY) >= DATE_ADD("{move_in_date.strftime("%Y-%m-%d")}", INTERVAL {number_of_days_stay} DAY) ORDER BY a.price;'))
     tables = [row for row in result.fetchall()]
     filtered_df=pd.DataFrame(tables)
     if not filtered_df.empty:

@@ -21,8 +21,12 @@ option = st.selectbox(
     ('Select an option', 'Add Data', 'Update Data', 'Delete Data')
 )
 # Function to determine database based on room type
-def get_database(room_type):
-    return 'airbnb0' if room_type == 'Entire home/apt' else 'airbnb1'
+
+def room_type_hash(room_type):
+    if room_type == 'Entire home/apt':
+        return 0
+    else:
+        return 1
 engine = create_engine(f'mysql+pymysql://root:dsci551@localhost')
 connection = engine.connect()
 result = connection.execute(text(f'SELECT MAX(property_id) AS max_id FROM (SELECT property_id FROM airbnb0.property UNION SELECT property_id FROM airbnb1.property) AS combined_ids;'))
@@ -33,7 +37,7 @@ if option == 'Add Data':
     st.header("File Upload")
     st.markdown(
         '[Data Entry Template for Download](https://docs.google.com/spreadsheets/d/1xfcIFy00AS1oHGmre332Bf_v7C_Gv8UohjnzTzd0Icc/edit?usp=sharing)')
-    st.write(f"start your listing id from: {max_id+1}")
+    st.write(f"Start your property_id from: {max_id+1}. Please keep your property_id for your record so that you can use it to update/delete your property listing later if needed")
     st.write(f"If you have not had airbnb listing before, start your host id from: {max_host_id + 1}. Please keep your host id for your record so that you can use it to enter future airbnb listing. If you do not remember your host_id, please contact us.")
     uploaded_file = st.file_uploader("Choose a CSV file", type='csv')
     if uploaded_file is not None:
@@ -43,14 +47,14 @@ if option == 'Add Data':
             result = connection.execute(text(duplicated_ids_query))
             duplicated_ids = [row[0] for row in result.fetchall()]
             if len(duplicated_ids) > 0:
-                st.write("File contains duplicated IDs:", duplicated_ids)
+                st.write(f"Please check the property ID you have entered in your file. Make sure that the property ID listed starts from{max_id+1}", duplicated_ids)
                 connection.close()
             else:
                 databases = ['airbnb0', 'airbnb1']  # List of databases
                 engines = {db: create_engine(f'mysql+pymysql://root:dsci551@localhost/{db}') for db in databases}
                 for index, row in df.iterrows():
                     room_type = row['room_type']
-                    database = get_database(room_type)
+                    database = 'airbnb' + str(room_type_hash(room_type))
                     engine = engines[database]
                     nomi = pgeocode.Nominatim('us')
                     query = nomi.query_postal_code(row['zipcode'])
@@ -101,7 +105,7 @@ if option == 'Add Data':
         st.write("Add New Listing")
         # ID will be generated for them through : SELECT MAX(id) + 1 AS next_id FROM property;
         # Collecting various pieces of information through input fields within the form
-        start_date = st.text_input('Property Available Move-in Date', '', placeholder='example: 1/1/2022')
+        start_date = st.text_input('Property Available Move-in Date', '', placeholder='example: 2022-01-01')
         name = st.text_input('Name', '', placeholder='example: Clean & quiet apt home by the park')
         host_id = st.text_input(f'Host ID(For new hosts,start your host id from:{max_host_id + 1}', '', placeholder='example: 18946')
         host_name = st.text_input('Host Name', '', placeholder='example: Kate')
@@ -126,6 +130,11 @@ if option == 'Add Data':
 
     # Conditional to check if the form has been submitted
     if submit_button:
+        try:
+            datetime.strptime(start_date, '%Y-%m-%d')
+        except ValueError:
+            st.write(
+                "Error: Data type mismatch. move-in-date only accepts date values in 'YYYY-MM-DD' format.")
         data = {
             "property_id":property_id,
             "available_since_date": start_date,
@@ -142,24 +151,24 @@ if option == 'Add Data':
             "longitude": longitude
         }
         property_insert_query = f"""
-            INSERT INTO {get_database(data["room_type"])}.property (property_id, name, room_type, price, minimum_nights, availability_365, available_since_date)
+            INSERT INTO {'airbnb' + str(room_type_hash(room_type))}.property (property_id, name, room_type, price, minimum_nights, availability_365, available_since_date)
             VALUES ({data["property_id"]},'{data["name"]}', '{data["room_type"]}', {data["price"]}, {data["minimum_nights"]}, {data["availability_365"]}, '{data["available_since_date"]}');
             """
         host_insert_query = f"""
-           INSERT INTO {get_database(data["room_type"])}.host (host_id, host_name)
+           INSERT INTO {'airbnb' + str(room_type_hash(room_type))}.host (host_id, host_name)
            VALUES ({data["host_id"]}, '{data["host_name"]}');
            """
         hostby_insert_query = f"""
-            INSERT INTO {get_database(data["room_type"])}.hostby (property_id, host_id)
+            INSERT INTO {'airbnb' + str(room_type_hash(room_type))}.hostby (property_id, host_id)
             VALUES ({data["property_id"]}, {data["host_id"]});
             """
         location_insert_query = f"""
-            INSERT INTO {get_database(data["room_type"])}.location (neighbourhood_group, neighbourhood, latitude, longitude)
+            INSERT INTO {'airbnb' + str(room_type_hash(room_type))}.location (neighbourhood_group, neighbourhood, latitude, longitude)
             VALUES ('{data["neighbourhood_group"]}', '{data["neighbourhood"]}', {data["latitude"]}, {data["longitude"]});
             """
         locatein_insert_query = f"""
-            INSERT INTO {get_database(data["room_type"])}.locatein (property_id, location_id)
-            VALUES ({data["property_id"]},(SELECT MAX(location_id) FROM {get_database(data["room_type"])}.location));
+            INSERT INTO {'airbnb' + str(room_type_hash(room_type))}.locatein (property_id, location_id)
+            VALUES ({data["property_id"]},(SELECT MAX(location_id) FROM {'airbnb' + str(room_type_hash(room_type))}.location));
             """
         try:
             connection.execute(text(property_insert_query))
@@ -171,9 +180,7 @@ if option == 'Add Data':
             st.write("Form Submitted!")
             st.write(f"Data Added: {name}, {data}")
         except Exception as e:
-            st.write("An error occurred while adding data.")
-            st.write(e)
-
+            st.write("Please check once again on the data you inputted")
 
 elif option == 'Update Data':
     with (st.form(key='update_form')):
@@ -222,9 +229,8 @@ elif option == 'Update Data':
                             connection.commit()
                             st.write(f"Updated property ID {property_id}'s {find_column} data to be {new_data}")
                             property_found=True
-                        except Exception as e:
+                        except:
                             st.write("An error occurred while updating data.")
-                            st.write(e)
                             property_found=True
                         break
                 if not property_found:
