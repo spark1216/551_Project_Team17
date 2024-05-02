@@ -14,7 +14,7 @@ Step6. Using dsci551_project_mysql_setup.py to set up our database. You can veri
 
 Step7. Streamlit connection: make sure you place the folder in the right directory. 
 
-Step8. Go to the main.py and run it. Paste this line into the terminal and it will direct you to our database UI. We recommend using the following command to give permission for file upload:  streamlit run /Users/winniecai/PycharmProjects/551/venv/project2/main.py --server.enableXsrfProtection false 
+Step8. Download main.py in the main branch and run it. Paste this line into the terminal and it will direct you to our database UI. We recommend using the following command to give permission for file upload:  streamlit run /Users/winniecai/PycharmProjects/551/venv/project2/main.py --server.enableXsrfProtection false 
 
 After you paste the command line, it will redirect you to our database website. Now you can just use our UI to manage the database!
 
