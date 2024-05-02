@@ -1,3 +1,18 @@
+--- Description for each directory
+
+"Database_creatino" directory contains two files: 
+
+  -"dsci551_project_mysql_setup.py" is a Python script for database creation;
+  -"airbnb_ds_clean.csv" is the cleaned dataset for the orignial records insertion.
+
+"main.py" and "pages" directory are for streamlit deployment.
+
+"Airbnb_DSCI_551_EDA_data_cleaning-3.ipynb" in the main branch is the Python script for the data cleaning part.
+
+
+
+
+
 --- Instruction on how to implement our project.
 
 Step1. Go to our github: https://github.com/spark1216/551_Project_Team17
