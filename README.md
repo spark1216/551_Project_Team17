@@ -1,4 +1,4 @@
---- Description for each directory
+**--- Description for each directory**
 
 "Database_creation" directory contains two files: 
 
@@ -15,7 +15,7 @@
 
 
 
---- Instruction on how to implement our project.
+**--- Instruction on how to implement our project.**
 
 Step1. Go to our github: https://github.com/spark1216/551_Project_Team17
 
@@ -23,7 +23,7 @@ Step2. Download all the file in the folder "pages", arrange in the correct order
 
 Step3. Download the airbnb_ds_clean.csv in the folder "database creation", and its directory path will be used in the dsci551_project_mysql_setup.py
 
-Step4. Pip installs necessary modules: streamlit, datetime, pymysql, sqlalchemy, pgeocode
+Step4. Pip installs necessary modules: pandas, streamlit, datetime, pymysql, sqlalchemy, pgeocode
 
 Step5. Download the local MySQL database, set the password for the localhost (we suggest the password to be dsci551 so you do not need to modify the code). You can verify the password by typing into the terminal and starting MySQL.
 
